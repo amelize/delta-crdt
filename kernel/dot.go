@@ -151,6 +151,31 @@ func (dotKernel DotKernel) RemoveValue(value interface{}) *DotKernel {
 	return res
 }
 
+func (dotKernel DotKernel) RemovePair(value Pair) *DotKernel {
+	res := NewDotKernel()
+
+	_, exists := dotKernel.Dots[value]
+	if exists {
+		res.Ctx.insertDot(value, false)
+		delete(dotKernel.Dots, value)
+	}
+
+	res.Ctx.compact()
+
+	return res
+}
+
+func (dotKernel DotKernel) RemoveAll() *DotKernel {
+	res := NewDotKernel()
+	for k := range dotKernel.Dots {
+		res.Ctx.insertDot(k, false)
+		delete(dotKernel.Dots, k)
+	}
+
+	res.Ctx.compact()
+	return res
+}
+
 func (dotKernel *DotKernel) Join(other *DotKernel) {
 	if dotKernel == other {
 		return

@@ -60,6 +60,13 @@ func (set AWORSet) Remove(val interface{}) *AWORSet {
 	return res
 }
 
+func (set AWORSet) Reset() *AWORSet {
+	res := new()
+
+	res.dotKernel = set.dotKernel.RemoveAll()
+	return res
+}
+
 func (set AWORSet) Join(other *AWORSet) {
 	set.dotKernel.Join(other.dotKernel)
 }

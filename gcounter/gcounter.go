@@ -46,11 +46,17 @@ func (counter GCounter) Inc(value int64) *GCounter {
 	return change
 }
 
-func (counter GCounter) Join(other *GCounter) {
-	for k, v := range other.state {
-		current := counter.state[k]
-		if current < v {
-			counter.state[k] = v
+func (counter GCounter) Join(other interface{}) {
+	otherCounter, ok := other.(*GCounter)
+
+	if ok {
+		for k, v := range otherCounter.state {
+			current := counter.state[k]
+			if current < v {
+				counter.state[k] = v
+			}
 		}
+	} else {
+		panic("incorrect join")
 	}
 }

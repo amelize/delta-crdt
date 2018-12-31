@@ -23,6 +23,10 @@ func pairCompair(a Pair, b Pair) bool {
 	return false
 }
 
+func pairCompairEqual(a Pair, b Pair) bool {
+	return a.First == b.First && b.Second == b.Second
+}
+
 type dot struct {
 	pair  Pair
 	value interface{}
@@ -37,6 +41,14 @@ func (a orderedDots) Less(i, j int) bool {
 	aj := a[j].pair
 
 	return pairCompair(ai, aj)
+}
+
+func lessPair(a interface{}, b interface{}) bool {
+	return pairCompair(a.(Pair), b.(Pair))
+}
+
+func equalPair(a interface{}, b interface{}) bool {
+	return pairCompairEqual(a.(Pair), b.(Pair))
 }
 
 func createOrderedDots(source map[Pair]interface{}) orderedDots {

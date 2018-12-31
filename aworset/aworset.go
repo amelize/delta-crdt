@@ -18,6 +18,13 @@ func New(id string) *AWORSet {
 	}
 }
 
+func NewWithContext(id string, ctx *kernel.DotContext) *AWORSet {
+	return &AWORSet{
+		id:        id,
+		dotKernel: kernel.NewDotKernelWithContext(ctx),
+	}
+}
+
 func new() *AWORSet {
 	return &AWORSet{
 		dotKernel: kernel.NewDotKernel(),
@@ -27,20 +34,24 @@ func new() *AWORSet {
 func (set AWORSet) Value() map[interface{}]bool {
 	result := make(map[interface{}]bool)
 
-	for _, v := range set.dotKernel.Dots {
-		result[v] = true
+	it := kernel.NewIterator(set.dotKernel.Dots)
+	for it.HasMore() {
+		result[it.Value()] = true
+		it.Next()
 	}
 
 	return result
 }
 
 func (set AWORSet) In(val interface{}) bool {
-	for _, v := range set.dotKernel.Dots {
-		if reflect.DeepEqual(val, v) {
+	it := kernel.NewIterator(set.dotKernel.Dots)
+	for it.HasMore() {
+		if reflect.DeepEqual(it.Value(), val) {
 			return true
 		}
-	}
 
+		it.Next()
+	}
 	return false
 }
 
@@ -67,6 +78,11 @@ func (set AWORSet) Reset() *AWORSet {
 	return res
 }
 
-func (set AWORSet) Join(other *AWORSet) {
-	set.dotKernel.Join(other.dotKernel)
+func (set AWORSet) Join(other interface{}) {
+	otherDot, ok := other.(*AWORSet)
+	if ok {
+		set.dotKernel.Join(otherDot.dotKernel)
+	} else {
+		panic("wrong type")
+	}
 }

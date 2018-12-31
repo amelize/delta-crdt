@@ -1,6 +1,8 @@
 package kernel
 
-import "reflect"
+import (
+	"reflect"
+)
 
 type DotContext struct {
 	casualContext map[string]int32
@@ -113,24 +115,31 @@ func (ctx DotContext) Join(other *DotContext) {
 }
 
 type DotKernel struct {
-	Dots map[Pair]interface{}
+	Dots *RBTree //map[Pair]interface{}
 	Ctx  *DotContext
 }
 
 func NewDotKernel() *DotKernel {
 	ctx := NewDotContext()
 	return &DotKernel{
-		Dots: make(map[Pair]interface{}),
+		Dots: New(lessPair, equalPair), // make(map[Pair]interface{}),
 		Ctx:  ctx,
+	}
+}
+
+func NewDotKernelWithContext(context *DotContext) *DotKernel {
+	return &DotKernel{
+		Dots: New(lessPair, equalPair), // make(map[Pair]interface{}),
+		Ctx:  context,
 	}
 }
 
 func (dotKernel DotKernel) Add(id string, value interface{}) *DotKernel {
 	dot := dotKernel.Ctx.makeDot(id)
-	dotKernel.Dots[dot] = value
+	dotKernel.Dots.Insert(dot, value)
 
 	res := NewDotKernel()
-	res.Dots[dot] = value
+	res.Dots.Insert(dot, value)
 	res.Ctx.insertDot(dot, true)
 
 	return res
@@ -139,10 +148,15 @@ func (dotKernel DotKernel) Add(id string, value interface{}) *DotKernel {
 func (dotKernel DotKernel) RemoveValue(value interface{}) *DotKernel {
 	res := NewDotKernel()
 
-	for k, v := range dotKernel.Dots {
-		if reflect.DeepEqual(v, value) {
+	iterator := NewIterator(dotKernel.Dots)
+	for iterator.HasMore() {
+		if reflect.DeepEqual(iterator.Value(), value) {
+			k := iterator.Key().(Pair)
 			res.Ctx.insertDot(k, false)
-			delete(dotKernel.Dots, k)
+			iterator.Next()
+			dotKernel.Dots.Remove(k)
+		} else {
+			iterator.Next()
 		}
 	}
 
@@ -154,10 +168,10 @@ func (dotKernel DotKernel) RemoveValue(value interface{}) *DotKernel {
 func (dotKernel DotKernel) RemovePair(value Pair) *DotKernel {
 	res := NewDotKernel()
 
-	_, exists := dotKernel.Dots[value]
+	exists := dotKernel.Dots.Exists(value)
 	if exists {
 		res.Ctx.insertDot(value, false)
-		delete(dotKernel.Dots, value)
+		dotKernel.Dots.Remove(value)
 	}
 
 	res.Ctx.compact()
@@ -167,9 +181,12 @@ func (dotKernel DotKernel) RemovePair(value Pair) *DotKernel {
 
 func (dotKernel DotKernel) RemoveAll() *DotKernel {
 	res := NewDotKernel()
-	for k := range dotKernel.Dots {
+	iterator := NewIterator(dotKernel.Dots)
+	for iterator.HasMore() {
+		k := iterator.Key().(Pair)
 		res.Ctx.insertDot(k, false)
-		delete(dotKernel.Dots, k)
+		iterator.Next()
+		dotKernel.Dots.Remove(k)
 	}
 
 	res.Ctx.compact()
@@ -181,28 +198,28 @@ func (dotKernel *DotKernel) Join(other *DotKernel) {
 		return
 	}
 
-	it := newOrderedIterator(dotKernel.Dots)
-	ito := newOrderedIterator(other.Dots)
+	it := NewIterator(dotKernel.Dots)
+	ito := NewIterator(other.Dots)
 
-	for it.hasMore() || ito.hasMore() {
-		if it.hasMore() && (!ito.hasMore() || pairCompair(it.val().pair, ito.val().pair)) {
-			p := it.val().pair
+	for it.HasMore() || ito.HasMore() {
+		if it.HasMore() && (!ito.HasMore() || pairCompair(it.Key().(Pair), ito.Key().(Pair))) {
+			p := it.Key().(Pair)
+
+			it.Next()
+
 			if other.Ctx.dotin(p) {
-				delete(dotKernel.Dots, p)
-				it.next()
-			} else {
-				it.next()
+				dotKernel.Dots.Remove(p)
 			}
-		} else if ito.hasMore() && (!it.hasMore() || pairCompair(ito.val().pair, it.val().pair)) {
-			p := ito.val().pair
+		} else if ito.HasMore() && (!it.HasMore() || pairCompair(ito.Key().(Pair), it.Key().(Pair))) {
+			p := ito.Key().(Pair)
 			if !dotKernel.Ctx.dotin(p) {
-				dotKernel.Dots[p] = ito.val().value
+				dotKernel.Dots.Insert(p, ito.Value())
 			}
 
-			ito.next()
-		} else if it.hasMore() && ito.hasMore() {
-			it.next()
-			ito.next()
+			ito.Next()
+		} else if it.HasMore() && ito.HasMore() {
+			it.Next()
+			ito.Next()
 		}
 	}
 

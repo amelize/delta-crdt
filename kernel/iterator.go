@@ -51,6 +51,14 @@ func equalPair(a interface{}, b interface{}) bool {
 	return pairCompairEqual(a.(Pair), b.(Pair))
 }
 
+func StringLess(a interface{}, b interface{}) bool {
+	return a.(string) < b.(string)
+}
+
+func StringEqual(a interface{}, b interface{}) bool {
+	return a.(string) == b.(string)
+}
+
 func createOrderedDots(source map[Pair]interface{}) orderedDots {
 	dots := make(orderedDots, 0, len(source))
 	for k, v := range source {

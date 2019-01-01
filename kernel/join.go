@@ -1,7 +1,16 @@
 package kernel
 
-// Joinable Uses by types that embeds other types
-type Embedable interface {
-	Join(interface{})
+type Crdt interface {
 	Context() *DotContext
+	Join(interface{})
+}
+
+type Resetable interface {
+	Crdt
+	Reset() Resetable
+}
+
+// Embedable Uses by types that embeds other types
+type Embedable interface {
+	Resetable
 }

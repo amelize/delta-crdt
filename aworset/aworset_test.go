@@ -74,4 +74,6 @@ func TestAWORSet_Add(t *testing.T) {
 		t.Fail()
 	}
 
+	resetRes := set2.Reset()
+	set1.Join(resetRes)
 }

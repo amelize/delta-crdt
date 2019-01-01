@@ -9,6 +9,19 @@ type DotContext struct {
 	dotCloud      map[Pair]bool
 }
 
+func (ctx DotContext) Copy() *DotContext {
+	cp := NewDotContext()
+	for k, v := range ctx.casualContext {
+		cp.casualContext[k] = v
+	}
+
+	for k, v := range ctx.dotCloud {
+		cp.dotCloud[k] = v
+	}
+
+	return cp
+}
+
 func NewDotContext() *DotContext {
 	return &DotContext{
 		casualContext: make(map[string]int32),
@@ -186,6 +199,7 @@ func (dotKernel DotKernel) RemoveAll() *DotKernel {
 		k := iterator.Key().(Pair)
 		res.Ctx.insertDot(k, false)
 		iterator.Next()
+		
 		dotKernel.Dots.Remove(k)
 	}
 

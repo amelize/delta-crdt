@@ -90,8 +90,25 @@ func (tree RBTree) findNode(key interface{}) *rbnode {
 	return current
 }
 
+func (tree *RBTree) Empty() bool {
+	return tree.root == nil
+}
+
+func (tree *RBTree) Clear() {
+	tree.root = nil
+}
+
 func (tree *RBTree) Exists(key interface{}) bool {
 	return tree.findNode(key) != nil
+}
+
+func (tree *RBTree) Get(key interface{}) interface{} {
+	node := tree.findNode(key)
+	if node != nil {
+		return node.payload
+	}
+
+	return nil
 }
 
 func (tree *RBTree) Remove(key interface{}) {
@@ -243,7 +260,9 @@ func (tree *RBTree) deleteFixup(x *rbnode, parent *rbnode) {
 		}
 	}
 
-	x.black = true
+	if x != nil {
+		x.black = true
+	}
 }
 
 func (tree *RBTree) delete(node *rbnode) {

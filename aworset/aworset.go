@@ -30,6 +30,9 @@ func new() *AWORSet {
 		dotKernel: kernel.NewDotKernel(),
 	}
 }
+func (set AWORSet) Context() *kernel.DotContext {
+	return set.dotKernel.Ctx
+}
 
 func (set AWORSet) Value() map[interface{}]bool {
 	result := make(map[interface{}]bool)
@@ -71,7 +74,7 @@ func (set AWORSet) Remove(val interface{}) *AWORSet {
 	return res
 }
 
-func (set AWORSet) Reset() *AWORSet {
+func (set AWORSet) Reset() kernel.Resetable {
 	res := new()
 
 	res.dotKernel = set.dotKernel.RemoveAll()

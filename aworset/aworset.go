@@ -30,6 +30,7 @@ func new() *AWORSet {
 		dotKernel: kernel.NewDotKernel(),
 	}
 }
+
 func (set AWORSet) Context() *kernel.DotContext {
 	return set.dotKernel.Ctx
 }

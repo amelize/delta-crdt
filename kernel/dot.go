@@ -199,7 +199,7 @@ func (dotKernel DotKernel) RemoveAll() *DotKernel {
 		k := iterator.Key().(Pair)
 		res.Ctx.insertDot(k, false)
 		iterator.Next()
-		
+
 		dotKernel.Dots.Remove(k)
 	}
 

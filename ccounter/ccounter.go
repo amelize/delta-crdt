@@ -183,7 +183,7 @@ func (c IntCounter) Reset() kernel.Resetable {
 	return &IntCounter{counter: ctxi.(*CCounter)}
 }
 
-func (c IntCounter) Join(other interface{}) {
+func (c *IntCounter) Join(other interface{}) {
 	intC, ok := other.(*IntCounter)
 	if ok {
 		c.counter.Join(intC.counter)

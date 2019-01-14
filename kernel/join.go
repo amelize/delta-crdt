@@ -1,8 +1,12 @@
 package kernel
 
-type Crdt interface {
-	Context() *DotContext
+type Joinable interface {
 	Join(interface{})
+}
+
+type Crdt interface {
+	Joinable
+	Context() *DotContext
 }
 
 type Resetable interface {

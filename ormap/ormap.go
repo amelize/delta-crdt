@@ -2,6 +2,7 @@ package ormap
 
 import (
 	"github.com/delta-crdt/aworset"
+	"github.com/delta-crdt/ccounter"
 	"github.com/delta-crdt/kernel"
 )
 
@@ -45,6 +46,10 @@ func NewWithAworset(id string, less kernel.Less, equal kernel.Equal) *ORMap {
 	return New(id, less, equal, func(id string, ctx *kernel.DotContext) kernel.Embedable {
 		return aworset.NewWithContext(id, ctx)
 	})
+}
+
+func NewWithStingKey(id string, newFunc NewItem) *ORMap {
+	return New(id, kernel.StringLess, kernel.StringEqual, newFunc)
 }
 
 func NewWithAworsetStringKey(id string) *ORMap {
@@ -94,10 +99,6 @@ func (ormap *ORMap) Reset() kernel.Resetable {
 	return res
 }
 
-func (ormap *ORMap) GetAsAworSet(id string) *aworset.AWORSet {
-	return ormap.Get(id).(*aworset.AWORSet)
-}
-
 func (ormap *ORMap) Join(other interface{}) {
 	otherMap, ok := other.(*ORMap)
 	if ok {
@@ -140,4 +141,16 @@ func (ormap *ORMap) join(other *ORMap) {
 	}
 
 	ormap.ctx.Join(other.ctx)
+}
+
+func (ormap *ORMap) GetAsAworSet(id string) *aworset.AWORSet {
+	return ormap.Get(id).(*aworset.AWORSet)
+}
+
+func (ormap *ORMap) GetAsIntCounter(id string) *ccounter.IntCounter {
+	return ormap.Get(id).(*ccounter.IntCounter)
+}
+
+func IntCounter(id string, ctx *kernel.DotContext) kernel.Embedable {
+	return ccounter.NewIntCounterWithContex(id, ctx)
 }

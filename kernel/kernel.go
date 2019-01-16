@@ -4,9 +4,29 @@ import (
 	"reflect"
 )
 
+type ContextData struct {
+	CasualContext map[string]int32
+	Cloud         []Pair
+}
+
 type DotContext struct {
 	casualContext map[string]int32
 	dotCloud      map[Pair]bool
+}
+
+func (ctx DotContext) GetData() ContextData {
+	cloud := make([]Pair, 0, len(ctx.dotCloud))
+
+	for pair := range ctx.dotCloud {
+		cloud = append(cloud, pair)
+	}
+
+	data := ContextData{
+		CasualContext: ctx.casualContext,
+		Cloud:         cloud,
+	}
+
+	return data
 }
 
 func (ctx DotContext) Copy() *DotContext {
@@ -20,6 +40,19 @@ func (ctx DotContext) Copy() *DotContext {
 	}
 
 	return cp
+}
+
+func NewFromData(data ContextData) *DotContext {
+	dotCloud := make(map[Pair]bool)
+
+	for _, pair := range data.Cloud {
+		dotCloud[pair] = true
+	}
+
+	return &DotContext{
+		casualContext: data.CasualContext,
+		dotCloud:      dotCloud,
+	}
 }
 
 func NewDotContext() *DotContext {

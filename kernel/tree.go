@@ -371,3 +371,21 @@ func (tree *RBTree) insert(x *rbnode) {
 
 	tree.root.black = true
 }
+
+func (tree *RBTree) GetIterator() *TreeIterator {
+	return NewIterator(tree)
+}
+
+func (tree *RBTree) ToMap() map[interface{}]interface{} {
+	it := tree.GetIterator()
+
+	result := make(map[interface{}]interface{})
+
+	for it.HasMore() {
+		result[it.Key()] = it.Value()
+
+		it.Next()
+	}
+
+	return result
+}

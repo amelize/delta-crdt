@@ -18,6 +18,12 @@ func New(id string) *AWORSet {
 	}
 }
 
+func NewFromKernel(kernel *kernel.DotKernel) *AWORSet {
+	return &AWORSet{
+		dotKernel: kernel,
+	}
+}
+
 func NewWithContext(id string, ctx *kernel.DotContext) *AWORSet {
 	return &AWORSet{
 		id:        id,
@@ -29,6 +35,10 @@ func new() *AWORSet {
 	return &AWORSet{
 		dotKernel: kernel.NewDotKernel(),
 	}
+}
+
+func (set AWORSet) GetKernel() *kernel.DotKernel {
+	return set.dotKernel
 }
 
 func (set AWORSet) Context() *kernel.DotContext {

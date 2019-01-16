@@ -120,8 +120,10 @@ func (awset *Aworset) In(val interface{}) bool {
 
 // GetChanges returns changes for broadcast and clears changes.
 func (awset *Aworset) Broadcast(replicaID, name string) (broadcaster.SendFunction, error) {
-	awset.lock.Lock()
-	defer awset.lock.Unlock()
+	awset.lock.RLock()
+	defer func() {
+		awset.lock.RUnlock()
+	}()
 
 	result := awset.result
 
@@ -153,8 +155,10 @@ func (awset *Aworset) Broadcast(replicaID, name string) (broadcaster.SendFunctio
 }
 
 func (awset *Aworset) Update(data interface{}) (broadcaster.UpdateFunction, error) {
-	awset.lock.Lock()
-	defer awset.lock.Unlock()
+	awset.lock.RLock()
+	defer func() {
+		awset.lock.RUnlock()
+	}()
 
 	if awset.broadcast == nil {
 		return nil, NoBroadcastHandler
@@ -179,9 +183,9 @@ func (awset *Aworset) Update(data interface{}) (broadcaster.UpdateFunction, erro
 }
 
 // Join joins broadcasted changes into set
-func (awset *Aworset) Join(interface{}) {
+func (awset *Aworset) Join(data interface{}) {
 	awset.lock.Lock()
 	defer awset.lock.Unlock()
 
-	awset.Join(awset)
+	awset.set.Join(data)
 }

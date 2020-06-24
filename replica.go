@@ -3,7 +3,7 @@ package crdt
 import (
 	"time"
 
-	"github.com/delta-crdt/broadcaster"
+	"github.com/amelize/delta-crdt/broadcaster"
 )
 
 // Replica Replica define replica instance

@@ -3,7 +3,7 @@ package aworset
 import (
 	"reflect"
 
-	"github.com/delta-crdt/kernel"
+	"github.com/amelize/delta-crdt/kernel"
 )
 
 type AWORSet struct {

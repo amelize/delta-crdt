@@ -1,9 +1,9 @@
 package ormap
 
 import (
-	"github.com/delta-crdt/aworset"
-	"github.com/delta-crdt/ccounter"
-	"github.com/delta-crdt/kernel"
+	"github.com/amelize/delta-crdt/aworset"
+	"github.com/amelize/delta-crdt/ccounter"
+	"github.com/amelize/delta-crdt/kernel"
 )
 
 type NewItem = func(id string, ctx *kernel.DotContext) kernel.Embedable

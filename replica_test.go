@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/delta-crdt/kernel"
+	"github.com/amelize/delta-crdt/kernel"
 
-	"github.com/delta-crdt/aworset"
+	"github.com/amelize/delta-crdt/aworset"
 )
 
 type KernelData struct {

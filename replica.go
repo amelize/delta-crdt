@@ -8,15 +8,17 @@ import (
 
 // Replica Replica define replica instance
 type Replica struct {
-	replicaID string
-	objects   *broadcaster.Objects
+	replicaID     string
+	objects       *broadcaster.Objects
+	broadcastRate time.Duration
 }
 
 // NewReplica creates a new replica with a specific ID. The ID must be unique cluster-wide.
-func NewReplica(replicaID string) *Replica {
+func NewReplica(replicaID string, broadcastRate time.Duration) *Replica {
 	replica := &Replica{
-		replicaID: replicaID,
-		objects:   broadcaster.NewObjects(),
+		replicaID:     replicaID,
+		objects:       broadcaster.NewObjects(),
+		broadcastRate: broadcastRate,
 	}
 
 	go replica.loop()
@@ -38,6 +40,13 @@ func (replica *Replica) CreateNewAWORSet(name string, handler AworsetBroadcastHa
 	return set
 }
 
+func (replica *Replica) CreateCCounter(name string, handler CCounterBroadcastHandler) *CCounter {
+	counter := NewCCounter(replica.replicaID, handler)
+	replica.objects.Add(name, counter)
+
+	return counter
+}
+
 func (repl *Replica) broadcast() {
 	// need to replace with Visitor pattern
 	head := repl.objects.GetChangedHead()
@@ -55,15 +64,14 @@ func (repl *Replica) broadcast() {
 	}
 }
 
-func (b *Replica) loop() {
+func (b Replica) loop() {
 	// TODO: stop
-	ticker := time.NewTicker(time.Millisecond * 500)
+	ticker := time.NewTicker(b.broadcastRate)
 
 	for {
 		select {
 		case <-ticker.C:
 			b.broadcast()
-
 		}
 	}
 }

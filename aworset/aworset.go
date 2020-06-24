@@ -37,10 +37,12 @@ func new() *AWORSet {
 	}
 }
 
+// GetKernel retutns kernel
 func (set AWORSet) GetKernel() *kernel.DotKernel {
 	return set.dotKernel
 }
 
+// Context returns content
 func (set AWORSet) Context() *kernel.DotContext {
 	return set.dotKernel.Ctx
 }

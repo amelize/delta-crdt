@@ -165,13 +165,13 @@ func (c IntCounter) Context() *kernel.DotContext {
 	return c.counter.Context()
 }
 
-func (c IntCounter) Inc(val int) *IntCounter {
+func (c IntCounter) Inc(val int64) *IntCounter {
 	cv := IntValue(val)
 	rc := c.counter.Inc(cv)
 	return &IntCounter{counter: rc}
 }
 
-func (c IntCounter) Dec(val int) *IntCounter {
+func (c IntCounter) Dec(val int64) *IntCounter {
 	cv := IntValue(val)
 	rc := c.counter.Dec(cv)
 	return &IntCounter{counter: rc}
@@ -190,7 +190,15 @@ func (c *IntCounter) Join(other interface{}) {
 	}
 }
 
-func (c IntCounter) Value() int {
+func (c IntCounter) GetCounter() *CCounter {
+	return c.counter
+}
+
+func (c IntCounter) GetId() string {
+	return c.counter.id
+}
+
+func (c IntCounter) Value() int64 {
 	val := c.counter.Value(IntValue(0))
-	return int(val.Value().(IntValue))
+	return int64(val.Value().(IntValue))
 }

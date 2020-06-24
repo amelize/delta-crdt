@@ -6,7 +6,7 @@ import (
 	"github.com/amelize/delta-crdt/kernel"
 )
 
-type NewItem = func(id string, ctx *kernel.DotContext) kernel.Embedable
+type NewItem = func(id string, ctx *kernel.DotContext) kernel.Embeddable
 
 type ORMap struct {
 	id      string
@@ -43,7 +43,7 @@ func (ormap ORMap) Context() *kernel.DotContext {
 }
 
 func NewWithAworset(id string, less kernel.Less, equal kernel.Equal) *ORMap {
-	return New(id, less, equal, func(id string, ctx *kernel.DotContext) kernel.Embedable {
+	return New(id, less, equal, func(id string, ctx *kernel.DotContext) kernel.Embeddable {
 		return aworset.NewWithContext(id, ctx)
 	})
 }
@@ -73,7 +73,7 @@ func (ormap *ORMap) Erase(key interface{}) kernel.Resetable {
 
 	val := ormap.data.Get(key)
 	if val != nil {
-		v := val.(kernel.Embedable).Reset()
+		v := val.(kernel.Embeddable).Reset()
 		res.ctx.Join(v.Context())
 		ormap.data.Remove(key)
 	}
@@ -88,7 +88,7 @@ func (ormap *ORMap) Reset() kernel.Resetable {
 		mit := kernel.NewIterator(ormap.data)
 
 		for mit.HasMore() {
-			v := mit.Value().(kernel.Embedable).Reset()
+			v := mit.Value().(kernel.Embeddable).Reset()
 			res.ctx.Join(v.Context())
 			mit.Next()
 		}
@@ -117,20 +117,20 @@ func (ormap *ORMap) join(other *ORMap) {
 	for mit.HasMore() && mito.HasMore() {
 		if mit.HasMore() && (!mito.HasMore() || ormap.less(mit.Key(), mito.Key())) {
 			empty := ormap.newFunc(ormap.id, other.ctx)
-			mit.Value().(kernel.Embedable).Join(empty)
+			mit.Value().(kernel.Embeddable).Join(empty)
 
 			ormap.ctx = imctx
 
 			mit.Next()
 		} else if mito.HasMore() && (!mit.HasMore() || ormap.less(mito.Key(), mit.Key())) {
-			val := ormap.data.Get(mito.Key()).(kernel.Embedable)
+			val := ormap.data.Get(mito.Key()).(kernel.Embeddable)
 			val.Join(mito.Value())
 
 			ormap.ctx = imctx
 
 			mito.Next()
 		} else if mito.HasMore() && mit.HasMore() {
-			val := ormap.data.Get(mit.Key()).(kernel.Embedable)
+			val := ormap.data.Get(mit.Key()).(kernel.Embeddable)
 			val.Join(mito.Value())
 
 			ormap.ctx = imctx
@@ -151,6 +151,6 @@ func (ormap *ORMap) GetAsIntCounter(id string) *ccounter.IntCounter {
 	return ormap.Get(id).(*ccounter.IntCounter)
 }
 
-func IntCounter(id string, ctx *kernel.DotContext) kernel.Embedable {
+func IntCounter(id string, ctx *kernel.DotContext) kernel.Embeddable {
 	return ccounter.NewIntCounterWithContex(id, ctx)
 }

@@ -14,7 +14,7 @@ type Resetable interface {
 	Reset() Resetable
 }
 
-// Embedable Uses by types that embeds other types
-type Embedable interface {
+// Embeddable Uses by types that embeds other types
+type Embeddable interface {
 	Resetable
 }

@@ -2,6 +2,7 @@ package crdt
 
 import (
 	"encoding/json"
+	"log"
 	"testing"
 	"time"
 
@@ -12,8 +13,9 @@ import (
 )
 
 type KernelData struct {
-	Pair  kernel.Pair
-	Value string
+	Pair     kernel.Pair
+	Value    string
+	IntValue int64
 }
 
 type JsonData struct {
@@ -75,12 +77,26 @@ type DummyIntHandler struct {
 }
 
 func (handler DummyIntHandler) Broadcast(replicaID, name string, counter *ccounter.IntCounter) error {
-	currentKernel := counter.Context()
+	currentKernel := counter.GetCounter().GetKernel()
+
+	log.Printf("value current %d", counter.Value())
 
 	data := JsonData{
-		Context: currentKernel.GetData(),
+		Context: counter.Context().GetData(),
 		Data:    make([]KernelData, 0),
 		ID:      counter.GetId(),
+	}
+
+	it := currentKernel.Dots.GetIterator()
+
+	for it.HasMore() {
+		kData := KernelData{
+			Pair:     it.Key().(kernel.Pair),
+			IntValue: int64(it.Value().(ccounter.IntValue)),
+		}
+
+		data.Data = append(data.Data, kData)
+		it.Next()
 	}
 
 	bts, err := json.Marshal(data)
@@ -98,7 +114,13 @@ func (handler DummyIntHandler) OnUpdate(data interface{}) (*ccounter.IntCounter,
 	newKernel := kernel.NewDotKernel()
 	newKernel.Ctx = kernel.NewFromData(jsonData.Context)
 
-	cnt := ccounter.NewIntCounterWithContex(jsonData.ID, newKernel.Ctx)
+	for _, v := range jsonData.Data {
+		newKernel.Dots.Insert(v.Pair, ccounter.IntValue(v.IntValue))
+	}
+
+	cnt := ccounter.NewIntCounterWithKernel(jsonData.ID, newKernel)
+
+	log.Printf("-> %d", cnt.Value())
 
 	return cnt, nil
 }
@@ -106,7 +128,7 @@ func (handler DummyIntHandler) OnUpdate(data interface{}) (*ccounter.IntCounter,
 func TestReplica_CreateNewAWORSet(t *testing.T) {
 	lock := make(chan struct{})
 
-	broadcastRate := time.Millisecond * 500
+	broadcastRate := time.Millisecond * 1500
 	replicaOne := NewReplica("a", broadcastRate)
 	replicaTwo := NewReplica("b", broadcastRate)
 
@@ -122,7 +144,7 @@ func TestReplica_CreateNewAWORSet(t *testing.T) {
 
 	setOne.Add("HelloBadge")
 	setTwo.Add("WelocomeBadge")
-	// setTwo.Add("One more")
+	setTwo.Add("One more")
 
 	<-lock
 }

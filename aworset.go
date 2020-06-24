@@ -135,6 +135,10 @@ func (awset *Aworset) Broadcast(replicaID, name string) (broadcaster.SendFunctio
 	awset.result = nil
 
 	sendFunction := func() error {
+		if result == nil {
+			return nil
+		}
+
 		err := handler.Broadcast(replicaID, name, result)
 		if err != nil {
 			awset.lock.Lock()

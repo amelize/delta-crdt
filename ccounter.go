@@ -102,11 +102,11 @@ func (cnt *CCounter) Reset() {
 	}
 }
 
-func (awset *CCounter) Value() int64 {
-	awset.lock.RLock()
-	defer awset.lock.RUnlock()
+func (cnt *CCounter) Value() int64 {
+	cnt.lock.RLock()
+	defer cnt.lock.RUnlock()
 
-	return awset.counter.Value()
+	return cnt.counter.Value()
 }
 
 // GetChanges returns changes for broadcast and clears changes.
@@ -134,6 +134,7 @@ func (cnt *CCounter) Broadcast(replicaID, name string) (broadcaster.SendFunction
 			if cnt.result != nil {
 				result.Join(cnt.result)
 			}
+
 			cnt.result = result
 
 			return err
@@ -174,9 +175,9 @@ func (cnt *CCounter) Update(data interface{}) (broadcaster.UpdateFunction, error
 }
 
 // Join joins broadcasted changes into set
-func (awset *CCounter) Join(data interface{}) {
-	awset.lock.Lock()
-	defer awset.lock.Unlock()
+func (cnt *CCounter) Join(data interface{}) {
+	cnt.lock.Lock()
+	defer cnt.lock.Unlock()
 
-	awset.counter.Join(data)
+	cnt.counter.Join(data)
 }

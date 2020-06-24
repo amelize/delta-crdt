@@ -31,10 +31,21 @@ func NewWithContext(id string, ctx *kernel.DotContext) *CCounter {
 	}
 }
 
+func NewWithKernel(id string, kernelData *kernel.DotKernel) *CCounter {
+	return &CCounter{
+		id:        id,
+		dotKernel: kernelData,
+	}
+}
+
 func new() *CCounter {
 	return &CCounter{
 		dotKernel: kernel.NewDotKernel(),
 	}
+}
+
+func (counter CCounter) GetKernel() *kernel.DotKernel {
+	return counter.dotKernel
 }
 
 func (counter CCounter) Context() *kernel.DotContext {
@@ -122,7 +133,7 @@ func (counter CCounter) Join(other interface{}) {
 	}
 }
 
-type IntValue int
+type IntValue int64
 
 func (c IntValue) Base() CounterValue {
 	return IntValue(0)
@@ -158,6 +169,12 @@ func NewIntCounter(id string) *IntCounter {
 func NewIntCounterWithContex(id string, ctx *kernel.DotContext) *IntCounter {
 	return &IntCounter{
 		counter: NewWithContext(id, ctx),
+	}
+}
+
+func NewIntCounterWithKernel(id string, ctx *kernel.DotKernel) *IntCounter {
+	return &IntCounter{
+		counter: NewWithKernel(id, ctx),
 	}
 }
 

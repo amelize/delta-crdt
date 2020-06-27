@@ -1,16 +1,17 @@
 package kernel
 
 import (
+	"log"
 	"reflect"
 )
 
 type ContextData struct {
-	CasualContext map[string]int32
+	CasualContext map[string]int64
 	Cloud         []Pair
 }
 
 type DotContext struct {
-	casualContext map[string]int32
+	casualContext map[string]int64
 	dotCloud      map[Pair]bool
 }
 
@@ -57,7 +58,7 @@ func NewFromData(data ContextData) *DotContext {
 
 func NewDotContext() *DotContext {
 	return &DotContext{
-		casualContext: make(map[string]int32),
+		casualContext: make(map[string]int64),
 		dotCloud:      make(map[Pair]bool),
 	}
 }
@@ -242,31 +243,38 @@ func (dotKernel DotKernel) RemoveAll() *DotKernel {
 
 func (dotKernel *DotKernel) Join(other *DotKernel) {
 	if dotKernel == other {
+		log.Printf("rejoin")
 		return
 	}
 
-	it := NewIterator(dotKernel.Dots)
-	ito := NewIterator(other.Dots)
+	itOne := NewIterator(dotKernel.Dots)
+	itTwo := NewIterator(other.Dots)
 
-	for it.HasMore() || ito.HasMore() {
-		if it.HasMore() && (!ito.HasMore() || pairCompair(it.Key().(Pair), ito.Key().(Pair))) {
-			p := it.Key().(Pair)
+	for itOne.HasMore() || itTwo.HasMore() {
+		//
+		if itOne.HasMore() && (!itTwo.HasMore() || pairCompare(itOne.Key().(Pair), itTwo.Key().(Pair))) {
+			p := itOne.Key().(Pair)
 
-			it.Next()
+			log.Printf("1: %+v", p)
 
-			if other.Ctx.dotin(p) {
-				dotKernel.Dots.Remove(p)
-			}
-		} else if ito.HasMore() && (!it.HasMore() || pairCompair(ito.Key().(Pair), it.Key().(Pair))) {
-			p := ito.Key().(Pair)
+			itOne.Next()
+
+			// if other.Ctx.dotin(p) {
+			// 	dotKernel.Dots.Remove(p)
+			// }
+		} else if itTwo.HasMore() && (!itOne.HasMore() || pairCompare(itTwo.Key().(Pair), itOne.Key().(Pair))) {
+			p := itTwo.Key().(Pair)
+
+			log.Printf("2: %+v %+v", p, itTwo.Value())
+
 			if !dotKernel.Ctx.dotin(p) {
-				dotKernel.Dots.Insert(p, ito.Value())
+				dotKernel.Dots.Insert(p, itTwo.Value())
 			}
 
-			ito.Next()
-		} else if it.HasMore() && ito.HasMore() {
-			it.Next()
-			ito.Next()
+			itTwo.Next()
+		} else if itOne.HasMore() && itTwo.HasMore() {
+			itOne.Next()
+			itTwo.Next()
 		}
 	}
 

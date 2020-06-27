@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/amelize/delta-crdt/broadcaster"
+	"github.com/google/uuid"
 )
 
 // Replica Replica define replica instance
@@ -11,6 +12,10 @@ type Replica struct {
 	replicaID     string
 	objects       *broadcaster.Objects
 	broadcastRate time.Duration
+}
+
+func NewReplicaWithSelfUniqueAddress(broadcastRate time.Duration) *Replica {
+	return NewReplica(uuid.New().String(), broadcastRate)
 }
 
 // NewReplica creates a new replica with a specific ID. The ID must be unique cluster-wide.

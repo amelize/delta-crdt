@@ -2,6 +2,7 @@ package crdt
 
 import (
 	"errors"
+	"log"
 	"sync"
 
 	"github.com/amelize/delta-crdt/aworset"
@@ -60,8 +61,12 @@ func (awset *Aworset) Add(val interface{}) {
 	change := awset.set.Add(val)
 
 	if awset.result != nil {
+		log.Printf("change add %+v (join)", val)
+
 		awset.result.Join(change)
 	} else {
+		log.Printf("change add %+v (new)", val)
+
 		awset.result = change
 	}
 }
@@ -104,7 +109,7 @@ func (awset *Aworset) Reset() {
 	}
 }
 
-func (awset *Aworset) Value() interface{} {
+func (awset *Aworset) Value() map[interface{}]bool {
 	awset.lock.RLock()
 	defer awset.lock.RUnlock()
 

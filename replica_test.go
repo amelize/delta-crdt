@@ -53,6 +53,8 @@ func (handler DummyHandler) Broadcast(replicaID, name string, aworset *aworset.A
 		return err
 	}
 
+	log.Printf("%s", string(bts))
+
 	return handler.other.Update(name, bts)
 }
 
@@ -128,9 +130,9 @@ func (handler DummyIntHandler) OnUpdate(data interface{}) (*ccounter.IntCounter,
 func TestReplica_CreateNewAWORSet(t *testing.T) {
 	lock := make(chan struct{})
 
-	broadcastRate := time.Millisecond * 1500
-	replicaOne := NewReplica("a", broadcastRate)
-	replicaTwo := NewReplica("b", broadcastRate)
+	broadcastRate := time.Microsecond * 1500
+	replicaOne := NewReplicaWithSelfUniqueAddress(broadcastRate)
+	replicaTwo := NewReplicaWithSelfUniqueAddress(broadcastRate)
 
 	firstHandler := DummyHandler{other: replicaTwo}
 	secondHandler := DummyHandler{other: replicaOne}
@@ -142,11 +144,30 @@ func TestReplica_CreateNewAWORSet(t *testing.T) {
 		lock <- struct{}{}
 	})
 
-	setOne.Add("HelloBadge")
-	setTwo.Add("WelocomeBadge")
-	setTwo.Add("One more")
+	setOne.Add("Value-One")
+	setOne.Add("Value-Two")
+	setTwo.Add("R-One")
+	setTwo.Add("R-Two")
 
 	<-lock
+
+	time.Sleep(1 * time.Second)
+
+	log.Printf(": %+v", setOne.Value())
+	log.Printf(": %+v", setTwo.Value())
+
+	for k := range setOne.Value() {
+		if !setTwo.In(k) {
+			t.Errorf("Not found %s", k)
+		}
+	}
+
+	for k := range setTwo.Value() {
+		if !setOne.In(k) {
+			t.Errorf("Not found %s", k)
+		}
+	}
+
 }
 
 func TestReplica_CreateCCounter(t *testing.T) {
@@ -170,6 +191,8 @@ func TestReplica_CreateCCounter(t *testing.T) {
 	setTwo.Dec(15)
 
 	<-lock
+
+	time.Sleep(1 * time.Second)
 
 	if setOne.Value() != -5 {
 		t.Fatalf("Wrong value %d", setOne.Value())

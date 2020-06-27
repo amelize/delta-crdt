@@ -4,27 +4,35 @@ import "sort"
 
 type Pair struct {
 	First  string
-	Second int32
+	Second int64
 }
 
-func pairCompair(a Pair, b Pair) bool {
-	if a.First < b.First {
+func (this *Pair) Compare(other Pair) bool {
+	if this.First < other.First {
 		return true
 	}
 
-	if a.First > b.First {
+	if this.First > other.First {
 		return false
 	}
 
-	if a.Second < b.Second {
+	if this.Second < other.Second {
 		return true
 	}
 
 	return false
 }
 
-func pairCompairEqual(a Pair, b Pair) bool {
-	return a.First == b.First && b.Second == b.Second
+func (this *Pair) Equal(other Pair) bool {
+	return this.First == other.First && this.Second == other.Second
+}
+
+func pairCompare(a Pair, b Pair) bool {
+	return a.Compare(b)
+}
+
+func pairCompareEqual(a Pair, b Pair) bool {
+	return a.Equal(b)
 }
 
 type dot struct {
@@ -40,15 +48,15 @@ func (a orderedDots) Less(i, j int) bool {
 	ai := a[i].pair
 	aj := a[j].pair
 
-	return pairCompair(ai, aj)
+	return ai.Compare(aj)
 }
 
 func lessPair(a interface{}, b interface{}) bool {
-	return pairCompair(a.(Pair), b.(Pair))
+	return pairCompare(a.(Pair), b.(Pair))
 }
 
 func equalPair(a interface{}, b interface{}) bool {
-	return pairCompairEqual(a.(Pair), b.(Pair))
+	return pairCompareEqual(a.(Pair), b.(Pair))
 }
 
 func StringLess(a interface{}, b interface{}) bool {
@@ -99,7 +107,7 @@ func (a orderedPair) Less(i, j int) bool {
 	ai := a[i]
 	aj := a[j]
 
-	return pairCompair(ai, aj)
+	return ai.Compare(aj)
 }
 
 type casualContextIterator struct {
@@ -107,7 +115,7 @@ type casualContextIterator struct {
 	current int
 }
 
-func CreateCCIterator(source map[string]int32) casualContextIterator {
+func CreateCCIterator(source map[string]int64) casualContextIterator {
 	vals := make(orderedPair, 0, len(source))
 
 	for k, v := range source {

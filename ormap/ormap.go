@@ -6,10 +6,10 @@ import (
 	"github.com/amelize/delta-crdt/kernel"
 )
 
-type NewItem = func(id string, ctx *kernel.DotContext) kernel.Embeddable
+type NewItem = func(id int64, ctx *kernel.DotContext) kernel.Embeddable
 
 type ORMap struct {
-	id      string
+	id      int64
 	data    *kernel.RBTree
 	ctx     *kernel.DotContext
 	less    kernel.Less
@@ -17,7 +17,7 @@ type ORMap struct {
 	newFunc NewItem
 }
 
-func New(id string, less kernel.Less, equal kernel.Equal, newFunc NewItem) *ORMap {
+func New(id int64, less kernel.Less, equal kernel.Equal, newFunc NewItem) *ORMap {
 	return &ORMap{
 		id:      id,
 		data:    kernel.NewTreeMap(less, equal),
@@ -42,17 +42,17 @@ func (ormap ORMap) Context() *kernel.DotContext {
 	return ormap.ctx
 }
 
-func NewWithAworset(id string, less kernel.Less, equal kernel.Equal) *ORMap {
-	return New(id, less, equal, func(id string, ctx *kernel.DotContext) kernel.Embeddable {
+func NewWithAworset(id int64, less kernel.Less, equal kernel.Equal) *ORMap {
+	return New(id, less, equal, func(id int64, ctx *kernel.DotContext) kernel.Embeddable {
 		return aworset.NewWithContext(id, ctx)
 	})
 }
 
-func NewWithStingKey(id string, newFunc NewItem) *ORMap {
+func NewWithStingKey(id int64, newFunc NewItem) *ORMap {
 	return New(id, kernel.StringLess, kernel.StringEqual, newFunc)
 }
 
-func NewWithAworsetStringKey(id string) *ORMap {
+func NewWithAworsetStringKey(id int64) *ORMap {
 	return NewWithAworset(id, kernel.StringLess, kernel.StringEqual)
 }
 
@@ -151,6 +151,6 @@ func (ormap *ORMap) GetAsIntCounter(id string) *ccounter.IntCounter {
 	return ormap.Get(id).(*ccounter.IntCounter)
 }
 
-func IntCounter(id string, ctx *kernel.DotContext) kernel.Embeddable {
+func IntCounter(id int64, ctx *kernel.DotContext) kernel.Embeddable {
 	return ccounter.NewIntCounterWithContex(id, ctx)
 }

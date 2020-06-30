@@ -6,8 +6,8 @@ import (
 )
 
 func TestORMapNew(t *testing.T) {
-	awsOne := NewWithAworsetStringKey("a")
-	awsTwo := NewWithAworsetStringKey("b")
+	awsOne := NewWithAworsetStringKey(1)
+	awsTwo := NewWithAworsetStringKey(2)
 
 	awsOne.GetAsAworSet("test1").Add("testValOne")
 	awsTwo.GetAsAworSet("test1").Add("testValTwo")
@@ -43,8 +43,8 @@ func TestORMapNew(t *testing.T) {
 }
 
 func TestORMapNewCCouner(t *testing.T) {
-	awsOne := NewWithStingKey("a", IntCounter)
-	awsTwo := NewWithStingKey("b", IntCounter)
+	awsOne := NewWithStingKey(1, IntCounter)
+	awsTwo := NewWithStingKey(2, IntCounter)
 
 	awsOne.GetAsIntCounter("a").Inc(2)
 	awsTwo.GetAsIntCounter("a").Inc(3)

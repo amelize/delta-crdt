@@ -14,21 +14,63 @@ func equalInt(a interface{}, b interface{}) bool {
 }
 
 func TestRBTree_Insert(t *testing.T) {
-	tree := New(lessInt, equalInt)
+	tree := NewTreeMap(lessInt, equalInt)
 
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 100; i++ {
 		tree.Insert(i, i)
 	}
 
+	size := 0
 	iterator := NewIterator(tree)
 	for iterator.HasMore() {
+		if iterator.Value() != size {
+			t.Failed()
+		}
+
+		if iterator.Key() != size {
+			t.Failed()
+		}
+
 		fmt.Printf("%d", iterator.Key())
 		iterator.Next()
+		size++
+	}
+
+	if size != 10 {
+		t.Failed()
+	}
+}
+
+func TestRBTree_Insert2(t *testing.T) {
+	tree := NewTreeMap(lessInt, equalInt)
+
+	for i := 99; i >= 0; i-- {
+		tree.Insert(i, i)
+	}
+
+	size := 0
+	iterator := NewIterator(tree)
+	for iterator.HasMore() {
+		if iterator.Value() != size {
+			t.Failed()
+		}
+
+		if iterator.Key() != size {
+			t.Failed()
+		}
+
+		fmt.Printf("%d", iterator.Key())
+		iterator.Next()
+		size++
+	}
+
+	if size != 10 {
+		t.Failed()
 	}
 }
 
 func TestRBTree_InsertDelete(t *testing.T) {
-	tree := New(lessInt, equalInt)
+	tree := NewTreeMap(lessInt, equalInt)
 
 	for i := 0; i < 100; i++ {
 		tree.Insert(i, i)

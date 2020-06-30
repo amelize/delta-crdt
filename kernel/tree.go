@@ -60,10 +60,11 @@ type RBTree struct {
 	root  *rbnode
 	less  Less
 	equal Equal
+	size  int64 // to be done
 }
 
-func New(less Less, equal Equal) *RBTree {
-	return &RBTree{less: less, equal: equal}
+func NewTreeMap(less Less, equal Equal) *RBTree {
+	return &RBTree{less: less, equal: equal, size: 0}
 }
 
 func (tree *RBTree) Insert(key interface{}, value interface{}) {
@@ -112,6 +113,8 @@ func (tree *RBTree) Get(key interface{}) interface{} {
 }
 
 func (tree *RBTree) Remove(key interface{}) {
+	tree.size--
+
 	x := tree.findNode(key)
 
 	fmt.Printf("node %+v\n", x)

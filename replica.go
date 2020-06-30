@@ -1,25 +1,25 @@
 package crdt
 
 import (
+	"math/rand"
 	"time"
 
 	"github.com/amelize/delta-crdt/broadcaster"
-	"github.com/google/uuid"
 )
 
 // Replica Replica define replica instance
 type Replica struct {
-	replicaID     string
+	replicaID     int64
 	objects       *broadcaster.Objects
 	broadcastRate time.Duration
 }
 
 func NewReplicaWithSelfUniqueAddress(broadcastRate time.Duration) *Replica {
-	return NewReplica(uuid.New().String(), broadcastRate)
+	return NewReplica(rand.Int63(), broadcastRate)
 }
 
 // NewReplica creates a new replica with a specific ID. The ID must be unique cluster-wide.
-func NewReplica(replicaID string, broadcastRate time.Duration) *Replica {
+func NewReplica(replicaID int64, broadcastRate time.Duration) *Replica {
 	replica := &Replica{
 		replicaID:     replicaID,
 		objects:       broadcaster.NewObjects(),

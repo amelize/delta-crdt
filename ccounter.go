@@ -8,7 +8,7 @@ import (
 )
 
 type CCounterBroadcastHandler interface {
-	Broadcast(replicaID, name string, counter *ccounter.IntCounter) error
+	Broadcast(replicaID int64, name string, counter *ccounter.IntCounter) error
 	OnUpdate(data interface{}) (*ccounter.IntCounter, error)
 }
 
@@ -23,7 +23,7 @@ type CCounter struct {
 	onUpdated broadcaster.OnUpdated
 }
 
-func NewCCounter(replica string, broadcastHandler CCounterBroadcastHandler) *CCounter {
+func NewCCounter(replica int64, broadcastHandler CCounterBroadcastHandler) *CCounter {
 	return &CCounter{
 		counter:   ccounter.NewIntCounter(replica),
 		broadcast: broadcastHandler,
@@ -110,7 +110,7 @@ func (cnt *CCounter) Value() int64 {
 }
 
 // GetChanges returns changes for broadcast and clears changes.
-func (cnt *CCounter) Broadcast(replicaID, name string) (broadcaster.SendFunction, error) {
+func (cnt *CCounter) Broadcast(replicaID int64, name string) (broadcaster.SendFunction, error) {
 	cnt.lock.RLock()
 	defer func() {
 		cnt.lock.RUnlock()

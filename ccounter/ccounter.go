@@ -13,25 +13,25 @@ type CounterValue interface {
 }
 
 type CCounter struct {
-	id        string
+	id        int64
 	dotKernel *kernel.DotKernel
 }
 
-func New(id string) *CCounter {
+func New(id int64) *CCounter {
 	return &CCounter{
 		id:        id,
 		dotKernel: kernel.NewDotKernel(),
 	}
 }
 
-func NewWithContext(id string, ctx *kernel.DotContext) *CCounter {
+func NewWithContext(id int64, ctx *kernel.DotContext) *CCounter {
 	return &CCounter{
 		id:        id,
 		dotKernel: kernel.NewDotKernelWithContext(ctx),
 	}
 }
 
-func NewWithKernel(id string, kernelData *kernel.DotKernel) *CCounter {
+func NewWithKernel(id int64, kernelData *kernel.DotKernel) *CCounter {
 	return &CCounter{
 		id:        id,
 		dotKernel: kernelData,
@@ -160,19 +160,19 @@ type IntCounter struct {
 	counter *CCounter
 }
 
-func NewIntCounter(id string) *IntCounter {
+func NewIntCounter(id int64) *IntCounter {
 	return &IntCounter{
 		counter: New(id),
 	}
 }
 
-func NewIntCounterWithContex(id string, ctx *kernel.DotContext) *IntCounter {
+func NewIntCounterWithContex(id int64, ctx *kernel.DotContext) *IntCounter {
 	return &IntCounter{
 		counter: NewWithContext(id, ctx),
 	}
 }
 
-func NewIntCounterWithKernel(id string, ctx *kernel.DotKernel) *IntCounter {
+func NewIntCounterWithKernel(id int64, ctx *kernel.DotKernel) *IntCounter {
 	return &IntCounter{
 		counter: NewWithKernel(id, ctx),
 	}
@@ -211,7 +211,7 @@ func (c IntCounter) GetCounter() *CCounter {
 	return c.counter
 }
 
-func (c IntCounter) GetId() string {
+func (c IntCounter) GetId() int64 {
 	return c.counter.id
 }
 

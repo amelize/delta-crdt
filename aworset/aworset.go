@@ -1,19 +1,27 @@
 package aworset
 
 import (
+	"log"
 	"reflect"
 
 	"github.com/amelize/delta-crdt/kernel"
 )
 
 type AWORSet struct {
-	id        string
+	id        int64
 	dotKernel *kernel.DotKernel
 }
 
-func New(id string) *AWORSet {
+func New(id int64) *AWORSet {
 	return &AWORSet{
 		id:        id,
+		dotKernel: kernel.NewDotKernel(),
+	}
+}
+
+func NewForDelta() *AWORSet {
+	return &AWORSet{
+		id:        0,
 		dotKernel: kernel.NewDotKernel(),
 	}
 }
@@ -24,7 +32,7 @@ func NewFromKernel(kernel *kernel.DotKernel) *AWORSet {
 	}
 }
 
-func NewWithContext(id string, ctx *kernel.DotContext) *AWORSet {
+func NewWithContext(id int64, ctx *kernel.DotContext) *AWORSet {
 	return &AWORSet{
 		id:        id,
 		dotKernel: kernel.NewDotKernelWithContext(ctx),
@@ -75,7 +83,10 @@ func (set AWORSet) Add(val interface{}) *AWORSet {
 	res := new()
 
 	res.dotKernel = set.dotKernel.RemoveValue(val)
-	res.dotKernel.Join(set.dotKernel.Add(set.id, val))
+
+	delta := set.dotKernel.Add(set.id, val)
+
+	res.dotKernel.Join(delta)
 
 	return res
 }
@@ -94,11 +105,26 @@ func (set AWORSet) Reset() kernel.Resetable {
 	return res
 }
 
-func (set AWORSet) Join(other interface{}) {
+func (set *AWORSet) Join(other interface{}) {
+	set.Dump()
+
 	otherDot, ok := other.(*AWORSet)
 	if ok {
 		set.dotKernel.Join(otherDot.dotKernel)
+
 	} else {
 		panic("wrong type")
 	}
+}
+
+func (currentKernel *AWORSet) Dump() {
+	it := currentKernel.dotKernel.Dots.GetIterator()
+
+	log.Printf("Dump start ----- ")
+	for it.HasMore() {
+		log.Printf("\t%+v %+v", it.Key(), it.Value())
+		it.Next()
+	}
+
+	log.Printf("Dump end ----- ")
 }

@@ -3,8 +3,12 @@ package kernel
 import "sort"
 
 type Pair struct {
-	First  string
-	Second int64
+	First  int64
+	Second uint64
+}
+
+func NewPair(first int64, second uint64) Pair {
+	return Pair{First: first, Second: second}
 }
 
 func (this *Pair) Compare(other Pair) bool {
@@ -29,6 +33,10 @@ func (this *Pair) Equal(other Pair) bool {
 
 func pairCompare(a Pair, b Pair) bool {
 	return a.Compare(b)
+}
+
+func firstLess(a Pair, b Pair) bool {
+	return a.First < b.First
 }
 
 func pairCompareEqual(a Pair, b Pair) bool {
@@ -115,7 +123,7 @@ type casualContextIterator struct {
 	current int
 }
 
-func CreateCCIterator(source map[string]int64) casualContextIterator {
+func CreateCCIterator(source map[int64]uint64) casualContextIterator {
 	vals := make(orderedPair, 0, len(source))
 
 	for k, v := range source {

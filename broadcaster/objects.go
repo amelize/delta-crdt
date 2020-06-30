@@ -13,7 +13,7 @@ type OnChanged = func()
 type OnUpdated = func()
 
 type Broadcastable interface {
-	Broadcast(replicaID, name string) (SendFunction, error)
+	Broadcast(replicaID int64, name string) (SendFunction, error)
 	Update(data interface{}) (UpdateFunction, error)
 	SetOnChanged(onChanged OnChanged)
 }

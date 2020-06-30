@@ -20,7 +20,7 @@ type ORMap struct {
 func New(id string, less kernel.Less, equal kernel.Equal, newFunc NewItem) *ORMap {
 	return &ORMap{
 		id:      id,
-		data:    kernel.New(less, equal),
+		data:    kernel.NewTreeMap(less, equal),
 		ctx:     kernel.NewDotContext(),
 		less:    less,
 		equal:   equal,
@@ -30,7 +30,7 @@ func New(id string, less kernel.Less, equal kernel.Equal, newFunc NewItem) *ORMa
 
 func new(less kernel.Less, equal kernel.Equal, newFunc NewItem) *ORMap {
 	return &ORMap{
-		data:    kernel.New(less, equal),
+		data:    kernel.NewTreeMap(less, equal),
 		ctx:     kernel.NewDotContext(),
 		less:    less,
 		equal:   equal,

@@ -21,14 +21,14 @@ type KernelData struct {
 type JsonData struct {
 	Context kernel.ContextData
 	Data    []KernelData
-	ID      string
+	ID      int64
 }
 
 type DummyHandler struct {
 	other *Replica
 }
 
-func (handler DummyHandler) Broadcast(replicaID, name string, aworset *aworset.AWORSet) error {
+func (handler DummyHandler) Broadcast(replicaID int64, name string, aworset *aworset.AWORSet) error {
 	currentKernel := aworset.GetKernel()
 
 	data := JsonData{
@@ -39,6 +39,8 @@ func (handler DummyHandler) Broadcast(replicaID, name string, aworset *aworset.A
 	it := currentKernel.Dots.GetIterator()
 
 	for it.HasMore() {
+		log.Printf("next value from it %+v", it.Value())
+
 		kData := KernelData{
 			Pair:  it.Key().(kernel.Pair),
 			Value: it.Value().(string),
@@ -78,7 +80,7 @@ type DummyIntHandler struct {
 	other *Replica
 }
 
-func (handler DummyIntHandler) Broadcast(replicaID, name string, counter *ccounter.IntCounter) error {
+func (handler DummyIntHandler) Broadcast(replicaID int64, name string, counter *ccounter.IntCounter) error {
 	currentKernel := counter.GetCounter().GetKernel()
 
 	log.Printf("value current %d", counter.Value())
@@ -130,7 +132,7 @@ func (handler DummyIntHandler) OnUpdate(data interface{}) (*ccounter.IntCounter,
 func TestReplica_CreateNewAWORSet(t *testing.T) {
 	lock := make(chan struct{})
 
-	broadcastRate := time.Microsecond * 1500
+	broadcastRate := time.Microsecond * 150
 	replicaOne := NewReplicaWithSelfUniqueAddress(broadcastRate)
 	replicaTwo := NewReplicaWithSelfUniqueAddress(broadcastRate)
 
@@ -146,12 +148,12 @@ func TestReplica_CreateNewAWORSet(t *testing.T) {
 
 	setOne.Add("Value-One")
 	setOne.Add("Value-Two")
-	setTwo.Add("R-One")
-	setTwo.Add("R-Two")
+	// setTwo.Add("R-One")
+	// setTwo.Add("R-Two")
 
 	<-lock
 
-	time.Sleep(1 * time.Second)
+	time.Sleep(2 * time.Second)
 
 	log.Printf(": %+v", setOne.Value())
 	log.Printf(": %+v", setTwo.Value())
@@ -174,8 +176,8 @@ func TestReplica_CreateCCounter(t *testing.T) {
 	lock := make(chan struct{})
 
 	broadcastRate := time.Millisecond * 500
-	replicaOne := NewReplica("a", broadcastRate)
-	replicaTwo := NewReplica("b", broadcastRate)
+	replicaOne := NewReplica(1, broadcastRate)
+	replicaTwo := NewReplica(2, broadcastRate)
 
 	firstHandler := DummyIntHandler{other: replicaTwo}
 	secondHandler := DummyIntHandler{other: replicaOne}

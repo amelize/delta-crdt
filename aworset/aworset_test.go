@@ -6,8 +6,8 @@ import (
 )
 
 func TestAWORSet_Add(t *testing.T) {
-	set1 := New("set-1")
-	set2 := New("set-2")
+	set1 := New(1)
+	set2 := New(2)
 
 	res1 := set1.Add("hello")
 	res2 := set2.Add("world")

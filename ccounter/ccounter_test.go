@@ -5,8 +5,8 @@ import (
 )
 
 func TestCCounter_Inc(t *testing.T) {
-	a := NewIntCounter("a")
-	b := NewIntCounter("b")
+	a := NewIntCounter(1)
+	b := NewIntCounter(2)
 
 	b.Join(a.Inc(2))
 	a.Join(b.Inc(3))

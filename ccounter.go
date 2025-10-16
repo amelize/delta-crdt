@@ -3,8 +3,8 @@ package crdt
 import (
 	"sync"
 
-	"github.com/amelize/delta-crdt/broadcaster"
-	"github.com/amelize/delta-crdt/ccounter"
+	"github.com/amelize/delta-crdt/internal/broadcaster"
+	"github.com/amelize/delta-crdt/internal/ccounter"
 )
 
 type CCounterBroadcastHandler interface {
@@ -18,19 +18,25 @@ type CCounter struct {
 
 	lock      sync.RWMutex
 	broadcast CCounterBroadcastHandler
+	name      string
 
-	onChanged broadcaster.OnChanged
+	onChanged broadcaster.ChangeHandlerInterface
 	onUpdated broadcaster.OnUpdated
 }
 
-func NewCCounter(replica int64, broadcastHandler CCounterBroadcastHandler) *CCounter {
+func NewCCounter(replica int64, name string, broadcastHandler CCounterBroadcastHandler) *CCounter {
 	return &CCounter{
 		counter:   ccounter.NewIntCounter(replica),
 		broadcast: broadcastHandler,
+		name:      name,
 	}
 }
 
-func (awset *CCounter) SetOnChanged(onChanged broadcaster.OnChanged) {
+func (awset *CCounter) GetName() string {
+	return awset.name
+}
+
+func (awset *CCounter) SetOnChanged(onChanged broadcaster.ChangeHandlerInterface) {
 	awset.onChanged = onChanged
 }
 
@@ -51,7 +57,7 @@ func (cnt *CCounter) Inc(val int64) {
 		cnt.lock.Unlock()
 
 		if cnt.onChanged != nil {
-			go cnt.onChanged()
+			cnt.onChanged.OnChange(cnt.name)
 		}
 	}()
 
@@ -70,7 +76,7 @@ func (cnt *CCounter) Dec(val int64) {
 		cnt.lock.Unlock()
 
 		if cnt.onChanged != nil {
-			go cnt.onChanged()
+			cnt.onChanged.OnChange(cnt.name)
 		}
 	}()
 
@@ -89,7 +95,7 @@ func (cnt *CCounter) Reset() {
 		cnt.lock.Unlock()
 
 		if cnt.onChanged != nil {
-			go cnt.onChanged()
+			cnt.onChanged.OnChange(cnt.name)
 		}
 	}()
 
@@ -110,7 +116,7 @@ func (cnt *CCounter) Value() int64 {
 }
 
 // GetChanges returns changes for broadcast and clears changes.
-func (cnt *CCounter) Broadcast(replicaID int64, name string) (broadcaster.SendFunction, error) {
+func (cnt *CCounter) Broadcast(replicaID int64, name string) error {
 	cnt.lock.RLock()
 	defer func() {
 		cnt.lock.RUnlock()
@@ -119,59 +125,51 @@ func (cnt *CCounter) Broadcast(replicaID int64, name string) (broadcaster.SendFu
 	result := cnt.result
 
 	if cnt.broadcast == nil {
-		return nil, NoBroadcastHandler
+		return NoBroadcastHandler
 	}
 
 	handler := cnt.broadcast
 	cnt.result = nil
 
-	sendFunction := func() error {
-		err := handler.Broadcast(replicaID, name, result)
-		if err != nil {
-			cnt.lock.Lock()
-			defer cnt.lock.Unlock()
+	err := handler.Broadcast(replicaID, name, result)
+	if err != nil {
+		cnt.lock.Lock()
+		defer cnt.lock.Unlock()
 
-			if cnt.result != nil {
-				result.Join(cnt.result)
-			}
-
-			cnt.result = result
-
-			return err
+		if cnt.result != nil {
+			result.Join(cnt.result)
 		}
 
-		return nil
+		cnt.result = result
+
+		return err
 	}
 
-	return sendFunction, nil
+	return nil
 }
 
-func (cnt *CCounter) Update(data interface{}) (broadcaster.UpdateFunction, error) {
+func (cnt *CCounter) Update(data interface{}) error {
 	cnt.lock.RLock()
 	defer func() {
 		cnt.lock.RUnlock()
 	}()
 
 	if cnt.broadcast == nil {
-		return nil, NoBroadcastHandler
+		return NoBroadcastHandler
 	}
 
-	updateFunction := func() error {
-		set, err := cnt.broadcast.OnUpdate(data)
-		if err != nil {
-			return err
-		}
-
-		cnt.Join(set)
-
-		if cnt.onUpdated != nil {
-			cnt.onUpdated()
-		}
-
-		return nil
+	set, err := cnt.broadcast.OnUpdate(data)
+	if err != nil {
+		return err
 	}
 
-	return updateFunction, nil
+	cnt.counter.Join(set)
+
+	if cnt.onUpdated != nil {
+		go cnt.onUpdated()
+	}
+
+	return nil
 }
 
 // Join joins broadcasted changes into set

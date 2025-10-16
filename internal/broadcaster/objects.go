@@ -1,23 +1,10 @@
 package broadcaster
 
 import (
-	"errors"
 	"sync"
 )
 
-var NotExists = errors.New("Not exists")
-
-type SendFunction = func() error
-type UpdateFunction = func() error
-type OnChanged = func()
-type OnUpdated = func()
-
-type Broadcastable interface {
-	Broadcast(replicaID int64, name string) (SendFunction, error)
-	Update(data interface{}) (UpdateFunction, error)
-	SetOnChanged(onChanged OnChanged)
-}
-
+// Map of objects
 type Objects struct {
 	objects map[string]Broadcastable
 	lock    sync.RWMutex
@@ -37,12 +24,13 @@ func (objs *Objects) Add(name string, crdt Broadcastable) {
 	defer objs.lock.Unlock()
 
 	objs.objects[name] = crdt
-	crdt.SetOnChanged(func() {
-		objs.change.Push(name)
-	})
+	crdt.SetOnChanged(objs)
 }
 
 func (objs *Objects) Get(name string) Broadcastable {
+	objs.lock.RLock()
+	defer objs.lock.RUnlock()
+
 	record, exists := objs.objects[name]
 	if exists {
 		return record
@@ -51,10 +39,22 @@ func (objs *Objects) Get(name string) Broadcastable {
 	return nil
 }
 
-func (objs *Objects) GetChangedHead() string {
+func (objs *Objects) OnChange(name string) {
+	// Adding change
+	objs.change.Push(name)
+}
+
+// Get first changed item
+func (objs *Objects) GetChangedHead() *string {
+	objs.lock.Lock()
+	defer objs.lock.Unlock()
+
 	return objs.change.Head()
 }
 
 func (objs *Objects) Resend(name string) {
+	objs.lock.Lock()
+	defer objs.lock.Unlock()
+
 	objs.change.Push(name)
 }

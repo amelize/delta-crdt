@@ -4,7 +4,7 @@ import (
 	"log"
 	"reflect"
 
-	"github.com/amelize/delta-crdt/kernel"
+	"github.com/amelize/delta-crdt/internal/kernel"
 )
 
 type AWORSet struct {

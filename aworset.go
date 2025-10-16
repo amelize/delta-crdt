@@ -5,8 +5,8 @@ import (
 	"log"
 	"sync"
 
-	"github.com/amelize/delta-crdt/aworset"
-	"github.com/amelize/delta-crdt/broadcaster"
+	"github.com/amelize/delta-crdt/internal/aworset"
+	"github.com/amelize/delta-crdt/internal/broadcaster"
 )
 
 var NoBroadcastHandler = errors.New("No broadcast handler")
@@ -21,21 +21,27 @@ type Aworset struct {
 	deltas    *aworset.AWORSet
 	lock      sync.RWMutex
 	broadcast AworsetBroadcastHandler
+	name      string
 
-	onChanged broadcaster.OnChanged
-	onUpdated broadcaster.OnUpdated
+	onChangeHandler broadcaster.ChangeHandlerInterface
+	onUpdated       broadcaster.OnUpdated
 }
 
-func NewAworset(replica int64, broadcastHandler AworsetBroadcastHandler) *Aworset {
+func NewAworset(replica int64, name string, broadcastHandler AworsetBroadcastHandler) *Aworset {
 	return &Aworset{
 		set:       aworset.New(replica),
 		deltas:    aworset.NewForDelta(),
 		broadcast: broadcastHandler,
+		name:      name,
 	}
 }
 
-func (awset *Aworset) SetOnChanged(onChanged broadcaster.OnChanged) {
-	awset.onChanged = onChanged
+func (awset *Aworset) GetName() string {
+	return awset.name
+}
+
+func (awset *Aworset) SetOnChanged(handler broadcaster.ChangeHandlerInterface) {
+	awset.onChangeHandler = handler
 }
 
 func (awset *Aworset) SetOnUpdated(onUpdated broadcaster.OnUpdated) {
@@ -51,43 +57,42 @@ func (awset *Aworset) SetBroadcastHandler(broadcast AworsetBroadcastHandler) {
 
 func (awset *Aworset) Add(val interface{}) {
 	awset.lock.Lock()
-	defer func() {
-		awset.lock.Unlock()
 
-		if awset.onChanged != nil {
-			go awset.onChanged()
+	// Notify about change
+	defer func() {
+		if awset.onChangeHandler != nil {
+			awset.onChangeHandler.OnChange(awset.name)
 		}
+
+		awset.lock.Unlock()
 	}()
 
 	awset.deltas.Join(awset.set.Add(val))
 	awset.deltas.Dump()
-
-	log.Printf("---------------------------------------- END")
 }
 
 func (awset *Aworset) Remove(val interface{}) {
 	awset.lock.Lock()
 	defer func() {
-		awset.lock.Unlock()
-
-		if awset.onChanged != nil {
-			go awset.onChanged()
+		if awset.onChangeHandler != nil {
+			awset.onChangeHandler.OnChange(awset.name)
 		}
+
+		awset.lock.Unlock()
 	}()
 
 	change := awset.set.Remove(val)
-
 	awset.deltas.Join(change)
 }
 
 func (awset *Aworset) Reset() {
 	awset.lock.Lock()
 	defer func() {
-		awset.lock.Unlock()
-
-		if awset.onChanged != nil {
-			go awset.onChanged()
+		if awset.onChangeHandler != nil {
+			awset.onChangeHandler.OnChange(awset.name)
 		}
+
+		awset.lock.Unlock()
 	}()
 
 	change := awset.set.Reset().(interface{})
@@ -114,7 +119,7 @@ func (awset *Aworset) In(val interface{}) bool {
 }
 
 // GetChanges returns changes for broadcast and clears changes.
-func (awset *Aworset) Broadcast(replicaID int64, name string) (broadcaster.SendFunction, error) {
+func (awset *Aworset) Broadcast(replicaID int64, name string) error {
 	awset.lock.Lock()
 	defer func() {
 		awset.lock.Unlock()
@@ -123,63 +128,48 @@ func (awset *Aworset) Broadcast(replicaID int64, name string) (broadcaster.SendF
 	result := awset.deltas
 
 	if awset.broadcast == nil {
-		return nil, NoBroadcastHandler
+		return NoBroadcastHandler
 	}
 
 	handler := awset.broadcast
 	// awset.result = nil
 
-	sendFunction := func() error {
-		if result == nil {
-			return nil
-		}
-
-		log.Printf("broadcast values")
-		err := handler.Broadcast(replicaID, name, result)
-		if err != nil {
-			awset.lock.Lock()
-			defer awset.lock.Unlock()
-
-			// if awset.deltas != nil {
-			// 	result.Join(awset.deltas)
-			// }
-			// awset.deltas = result
-
-			return err
-		}
-
+	if result == nil {
 		return nil
 	}
 
-	return sendFunction, nil
+	log.Printf("broadcast values")
+	err := handler.Broadcast(replicaID, name, result)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("broadcast done")
+	return nil
 }
 
-func (awset *Aworset) Update(data interface{}) (broadcaster.UpdateFunction, error) {
+func (awset *Aworset) Update(data interface{}) error {
 	awset.lock.RLock()
 	defer func() {
 		awset.lock.RUnlock()
 	}()
 
 	if awset.broadcast == nil {
-		return nil, NoBroadcastHandler
+		return NoBroadcastHandler
 	}
 
-	updateFunction := func() error {
-		set, err := awset.broadcast.OnUpdate(data)
-		if err != nil {
-			return err
-		}
-
-		awset.Join(set)
-
-		if awset.onUpdated != nil {
-			awset.onUpdated()
-		}
-
-		return nil
+	set, err := awset.broadcast.OnUpdate(data)
+	if err != nil {
+		return err
 	}
 
-	return updateFunction, nil
+	awset.set.Join(set)
+
+	if awset.onUpdated != nil {
+		go awset.onUpdated()
+	}
+
+	return nil
 }
 
 // Join joins broadcasted changes into set

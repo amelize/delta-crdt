@@ -5,10 +5,6 @@ import (
 	"sync"
 )
 
-type element struct {
-	next *element
-}
-
 func newQueue() *Queue {
 	return &Queue{
 		list: list.New(),
@@ -20,20 +16,22 @@ type Queue struct {
 	list       *list.List
 }
 
-func (queue *Queue) Head() string {
+func (queue *Queue) Head() *string {
 	queue.changeLock.Lock()
 	defer queue.changeLock.Unlock()
 
 	item := queue.list.Front()
-	if item != nil {
-		queue.list.Remove(item)
-	} else {
-		return ""
+	if item == nil {
+		return nil
 	}
 
-	return item.Value.(string)
+	queue.list.Remove(item)
+	itemString := item.Value.(string)
+
+	return &itemString
 }
 
+// Adding change to queue
 func (queue *Queue) Push(name string) {
 	queue.changeLock.Lock()
 	defer queue.changeLock.Unlock()

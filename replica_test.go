@@ -1,15 +1,17 @@
 package crdt
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"testing"
 	"time"
 
-	"github.com/amelize/delta-crdt/ccounter"
-	"github.com/amelize/delta-crdt/kernel"
+	"github.com/amelize/delta-crdt/internal/ccounter"
+	"github.com/amelize/delta-crdt/internal/kernel"
 
-	"github.com/amelize/delta-crdt/aworset"
+	"github.com/amelize/delta-crdt/internal/aworset"
 )
 
 type KernelData struct {
@@ -29,6 +31,7 @@ type DummyHandler struct {
 }
 
 func (handler DummyHandler) Broadcast(replicaID int64, name string, aworset *aworset.AWORSet) error {
+	fmt.Printf("broadcast started")
 	currentKernel := aworset.GetKernel()
 
 	data := JsonData{
@@ -132,9 +135,11 @@ func (handler DummyIntHandler) OnUpdate(data interface{}) (*ccounter.IntCounter,
 func TestReplica_CreateNewAWORSet(t *testing.T) {
 	lock := make(chan struct{})
 
+	ctx, cancel := context.WithCancel(context.Background())
+
 	broadcastRate := time.Microsecond * 150
-	replicaOne := NewReplicaWithSelfUniqueAddress(broadcastRate)
-	replicaTwo := NewReplicaWithSelfUniqueAddress(broadcastRate)
+	replicaOne := NewReplicaWithSelfUniqueAddress(ctx, broadcastRate)
+	replicaTwo := NewReplicaWithSelfUniqueAddress(ctx, broadcastRate)
 
 	firstHandler := DummyHandler{other: replicaTwo}
 	secondHandler := DummyHandler{other: replicaOne}
@@ -143,6 +148,7 @@ func TestReplica_CreateNewAWORSet(t *testing.T) {
 	setTwo := replicaTwo.CreateNewAWORSet("user.set", secondHandler)
 
 	setTwo.SetOnUpdated(func() {
+		fmt.Printf("Lock update")
 		lock <- struct{}{}
 	})
 
@@ -170,14 +176,17 @@ func TestReplica_CreateNewAWORSet(t *testing.T) {
 		}
 	}
 
+	cancel()
 }
 
 func TestReplica_CreateCCounter(t *testing.T) {
 	lock := make(chan struct{})
 
+	ctx, cancel := context.WithCancel(context.Background())
+
 	broadcastRate := time.Millisecond * 500
-	replicaOne := NewReplica(1, broadcastRate)
-	replicaTwo := NewReplica(2, broadcastRate)
+	replicaOne := NewReplica(ctx, 1, broadcastRate)
+	replicaTwo := NewReplica(ctx, 2, broadcastRate)
 
 	firstHandler := DummyIntHandler{other: replicaTwo}
 	secondHandler := DummyIntHandler{other: replicaOne}
@@ -199,4 +208,6 @@ func TestReplica_CreateCCounter(t *testing.T) {
 	if setOne.Value() != -5 {
 		t.Fatalf("Wrong value %d", setOne.Value())
 	}
+
+	cancel()
 }

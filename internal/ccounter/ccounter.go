@@ -1,7 +1,7 @@
 package ccounter
 
 import (
-	"github.com/amelize/delta-crdt/kernel"
+	"github.com/amelize/delta-crdt/internal/kernel"
 )
 
 type CounterValue interface {

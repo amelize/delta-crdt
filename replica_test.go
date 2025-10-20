@@ -3,7 +3,6 @@ package crdt
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"testing"
 	"time"
@@ -30,8 +29,25 @@ type DummyHandler struct {
 	other *Replica
 }
 
+type UpdatedHandler struct {
+	lock chan struct{}
+}
+
+func NewHandler() UpdatedHandler {
+	return UpdatedHandler{
+		lock: make(chan struct{}),
+	}
+}
+
+func (hanlder UpdatedHandler) OnUpdate() {
+	hanlder.lock <- struct{}{}
+}
+
+func (hanlder UpdatedHandler) Done() <-chan struct{} {
+	return hanlder.lock
+}
+
 func (handler DummyHandler) Broadcast(replicaID int64, name string, aworset *aworset.AWORSet) error {
-	fmt.Printf("broadcast started")
 	currentKernel := aworset.GetKernel()
 
 	data := JsonData{
@@ -42,8 +58,6 @@ func (handler DummyHandler) Broadcast(replicaID int64, name string, aworset *awo
 	it := currentKernel.Dots.GetIterator()
 
 	for it.HasMore() {
-		log.Printf("next value from it %+v", it.Value())
-
 		kData := KernelData{
 			Pair:  it.Key().(kernel.Pair),
 			Value: it.Value().(string),
@@ -85,8 +99,6 @@ type DummyIntHandler struct {
 
 func (handler DummyIntHandler) Broadcast(replicaID int64, name string, counter *ccounter.IntCounter) error {
 	currentKernel := counter.GetCounter().GetKernel()
-
-	log.Printf("value current %d", counter.Value())
 
 	data := JsonData{
 		Context: counter.Context().GetData(),
@@ -133,7 +145,7 @@ func (handler DummyIntHandler) OnUpdate(data interface{}) (*ccounter.IntCounter,
 }
 
 func TestReplica_CreateNewAWORSet(t *testing.T) {
-	lock := make(chan struct{})
+	locker := NewHandler()
 
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -147,17 +159,14 @@ func TestReplica_CreateNewAWORSet(t *testing.T) {
 	setOne := replicaOne.CreateNewAWORSet("user.set", firstHandler)
 	setTwo := replicaTwo.CreateNewAWORSet("user.set", secondHandler)
 
-	setTwo.SetOnUpdated(func() {
-		fmt.Printf("Lock update")
-		lock <- struct{}{}
-	})
+	setTwo.SetOnUpdated(locker)
 
 	setOne.Add("Value-One")
 	setOne.Add("Value-Two")
 	// setTwo.Add("R-One")
 	// setTwo.Add("R-Two")
 
-	<-lock
+	<-locker.Done()
 
 	time.Sleep(2 * time.Second)
 
@@ -180,7 +189,7 @@ func TestReplica_CreateNewAWORSet(t *testing.T) {
 }
 
 func TestReplica_CreateCCounter(t *testing.T) {
-	lock := make(chan struct{})
+	locker := NewHandler()
 
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -194,14 +203,12 @@ func TestReplica_CreateCCounter(t *testing.T) {
 	setOne := replicaOne.CreateCCounter("user.setX", firstHandler)
 	setTwo := replicaTwo.CreateCCounter("user.setX", secondHandler)
 
-	setTwo.SetOnUpdated(func() {
-		lock <- struct{}{}
-	})
+	setTwo.SetOnUpdated(locker)
 
 	setOne.Inc(10)
 	setTwo.Dec(15)
 
-	<-lock
+	<-locker.Done()
 
 	time.Sleep(1 * time.Second)
 

@@ -8,9 +8,10 @@ import (
 	"log"
 
 	"github.com/amelize/delta-crdt/internal/broadcaster"
+	"github.com/amelize/delta-crdt/internal/types"
 )
 
-// Replica Replica define replica instance
+// Replica Replica define replica instances
 type Replica struct {
 	replicaID     int64
 	objects       *broadcaster.Objects
@@ -41,18 +42,26 @@ func (replica *Replica) Update(name string, data interface{}) error {
 }
 
 // CreateNewAWORSet creates new AWORSet inside replica with a specific name.
-func (replica *Replica) CreateNewAWORSet(name string, handler AworsetBroadcastHandler) *Aworset {
-	set := NewAworset(replica.replicaID, name, handler)
+func (replica *Replica) CreateNewAWORSet(name string, handler types.AworsetBroadcastHandler) *types.Aworset {
+	set := types.NewAworset(replica.replicaID, name, handler)
 	replica.objects.Add(name, set)
 
 	return set
 }
 
-func (replica *Replica) CreateCCounter(name string, handler CCounterBroadcastHandler) *CCounter {
-	counter := NewCCounter(replica.replicaID, name, handler)
+func (replica *Replica) CreateCCounter(name string, handler types.CCounterBroadcastHandler) *types.CCounter {
+	counter := types.NewCCounter(replica.replicaID, name, handler)
 	replica.objects.Add(name, counter)
 
 	return counter
+}
+
+func (replica *Replica) GetAsCCounter(name string) *types.CCounter {
+	return replica.objects.Get(name).(*types.CCounter)
+}
+
+func (replica *Replica) GetAsAworSet(name string) *types.Aworset {
+	return replica.objects.Get(name).(*types.Aworset)
 }
 
 func (replica *Replica) broadcast() {
@@ -60,8 +69,6 @@ func (replica *Replica) broadcast() {
 
 	for head != nil {
 		obj := replica.objects.Get(*head)
-
-		log.Printf("Broadcastting ... ")
 		err := obj.Broadcast(replica.replicaID, *head)
 
 		if err != nil {

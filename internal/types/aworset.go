@@ -1,4 +1,4 @@
-package crdt
+package types
 
 import (
 	"errors"
@@ -24,7 +24,7 @@ type Aworset struct {
 	name      string
 
 	onChangeHandler broadcaster.ChangeHandlerInterface
-	onUpdated       broadcaster.OnUpdated
+	onUpdated       broadcaster.UpdatedHandlerInterface
 }
 
 func NewAworset(replica int64, name string, broadcastHandler AworsetBroadcastHandler) *Aworset {
@@ -44,7 +44,7 @@ func (awset *Aworset) SetOnChanged(handler broadcaster.ChangeHandlerInterface) {
 	awset.onChangeHandler = handler
 }
 
-func (awset *Aworset) SetOnUpdated(onUpdated broadcaster.OnUpdated) {
+func (awset *Aworset) SetOnUpdated(onUpdated broadcaster.UpdatedHandlerInterface) {
 	awset.onUpdated = onUpdated
 }
 
@@ -132,8 +132,6 @@ func (awset *Aworset) Broadcast(replicaID int64, name string) error {
 	}
 
 	handler := awset.broadcast
-	// awset.result = nil
-
 	if result == nil {
 		return nil
 	}
@@ -166,7 +164,7 @@ func (awset *Aworset) Update(data interface{}) error {
 	awset.set.Join(set)
 
 	if awset.onUpdated != nil {
-		go awset.onUpdated()
+		go awset.onUpdated.OnUpdate()
 	}
 
 	return nil

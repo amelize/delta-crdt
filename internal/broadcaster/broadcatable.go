@@ -1,11 +1,8 @@
 package broadcaster
 
-import "errors"
-
-var NotExists = errors.New("Not exists")
-
-type UpdateFunction = func() error
-type OnUpdated = func()
+type UpdatedHandlerInterface interface {
+	OnUpdate()
+}
 
 type ChangeHandlerInterface interface {
 	OnChange(name string)

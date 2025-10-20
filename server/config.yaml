@@ -1,0 +1,8 @@
+httpPort: 8080
+clusterPort: 7080
+advertisePort: 6501
+bindAddress: "172.26.157.38"
+cluster:
+  servers:
+    - 127.0.0.1:7080
+  

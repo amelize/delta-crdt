@@ -1,4 +1,4 @@
-package crdt
+package types
 
 import (
 	"sync"
@@ -21,7 +21,7 @@ type CCounter struct {
 	name      string
 
 	onChanged broadcaster.ChangeHandlerInterface
-	onUpdated broadcaster.OnUpdated
+	onUpdated broadcaster.UpdatedHandlerInterface
 }
 
 func NewCCounter(replica int64, name string, broadcastHandler CCounterBroadcastHandler) *CCounter {
@@ -40,7 +40,7 @@ func (awset *CCounter) SetOnChanged(onChanged broadcaster.ChangeHandlerInterface
 	awset.onChanged = onChanged
 }
 
-func (awset *CCounter) SetOnUpdated(onUpdated broadcaster.OnUpdated) {
+func (awset *CCounter) SetOnUpdated(onUpdated broadcaster.UpdatedHandlerInterface) {
 	awset.onUpdated = onUpdated
 }
 
@@ -166,7 +166,7 @@ func (cnt *CCounter) Update(data interface{}) error {
 	cnt.counter.Join(set)
 
 	if cnt.onUpdated != nil {
-		go cnt.onUpdated()
+		go cnt.onUpdated.OnUpdate()
 	}
 
 	return nil
